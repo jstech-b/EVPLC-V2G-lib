@@ -1,0 +1,45 @@
+ux-gnueabi-gcc
+AR=arm-ostl-linux-gnueabi-ar
+
+# 공통 컴파일 옵션
+CFLAGS=-g -Os -Wall -pedantic --sysroot=/opt/st/myir-yf13x/4.0.4-snapshot/sysroots/cortexa7t2hf-neon-vfpv4-ostl-linux-gnueabi
+CFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -fPIC  # Position Independent Code
+
+# 링커 옵션
+LDFLAGS += -mfloat-abi=hard -mfpu=neon-vfpv4 -shared  # 동적 라이브러리 옵션 추가
+
+# 라이브러리 설치 경로
+PREFIX=/usr/local
+LIBDIR=$(PREFIX)/lib
+INCDIR=$(PREFIX)/include
+
+# 출력할 동적 라이브러리 이름
+TARGET=libOpenV2G.so
+
+# 소스 및 헤더 파일 목록
+SOURCES=$(wildcard src/appHandshake/*.c src/codec/*.c src/din/*.c src/transport/*.c src/xmldsig/*.c)
+HEADERS=$(wildcard src/appHandshake/*.h src/codec/*.h src/din/*.h src/transport/*.h src/xmldsig/*.h)
+OBJECTS=$(SOURCES:.c=.o)
+INCLUDEDIRS=$(wildcard src/*)
+INCLUDES=$(INCLUDEDIRS:%=-I%)
+
+# 동적 라이브러리 생성
+$(TARGET): $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJECTS)
+
+# 개별 .o 파일 컴파일
+.c.o:
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+
+# 라이브러리 설치
+install: $(TARGET)
+	install -D $(TARGET) $(DESTDIR)$(LIBDIR)/$(TARGET)
+	install -d $(DESTDIR)$(INCDIR)/OpenV2G
+	install $(HEADERS) $(DESTDIR)$(INCDIR)/OpenV2G
+
+# 빌드 정리
+clean:
+	rm -f $(OBJECTS) $(TARGET)
+
+.PHONY: install clean
+
